@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Cache définitivement le badge de développement de Next.js */
+next-route-announcer, 
+#next-live-preview-feedback,
+[data-nextjs-scroll-focus-boundary] {
+  display: none !important;
+}
+
+nextjs-portal {
+  display: none !important;
+}
