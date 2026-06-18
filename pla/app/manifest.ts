@@ -1,1 +1,25 @@
-const manifest = { name: "PLA Assistant Logistique", short_name: "PLA", start_url: "/", display: "standalone", icons: [] } as const; export default manifest;
+import type { MetadataRoute } from 'next'
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Pocket Logistics Assistant',
+    short_name: 'PLA',
+    description: 'Suivi logistique offline-first',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [
+      {
+        src: '/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        src: '/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+    ],
+  }
+}
