@@ -17,6 +17,7 @@ import {
   PackageCheck,
   ShieldCheck,
 } from "lucide-react";
+import { authApi } from "@/lib/api/auth";
 
 type Step = 1 | 2 | 3;
 
@@ -197,6 +198,8 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [devCode, setDevCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const content = useMemo(() => {
@@ -223,43 +226,63 @@ export default function ForgotPasswordPage() {
     };
   }, [step]);
 
-  const runLoading = async (callback: () => void, duration = 1000) => {
-    setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, duration));
-      callback();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setInfo("");
+    setDevCode("");
 
     if (!email.includes("@")) {
       setError("Veuillez saisir une adresse email valide.");
       return;
     }
 
-    await runLoading(() => setStep(2), 1100);
+    setIsLoading(true);
+    try {
+      const response = await authApi.forgotPassword(email);
+      setInfo(response.message);
+      setDevCode(response.devCode ?? "");
+      setStep(2);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'envoyer le code pour le moment.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCodeSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setInfo("");
 
     if (code.length < 6) {
       setError("Le code de vérification doit contenir 6 chiffres.");
       return;
     }
 
-    await runLoading(() => setStep(3), 850);
+    setIsLoading(true);
+    try {
+      await authApi.verifyResetCode(email, code);
+      setStep(3);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Code de vérification invalide.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setInfo("");
 
     if (newPassword.length < 8) {
       setError("Le nouveau mot de passe doit contenir au moins 8 caractères.");
@@ -271,7 +294,19 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    await runLoading(() => router.push("/login?reset=1"), 1000);
+    setIsLoading(true);
+    try {
+      await authApi.resetPassword(email, code, newPassword);
+      router.push("/login?reset=1");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de réinitialiser le mot de passe.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -311,6 +346,12 @@ export default function ForgotPasswordPage() {
                     title="Lien sécurisé"
                     description="Le code expire rapidement et ne peut être utilisé qu’une seule fois."
                   />
+                  {info && <InfoMessage message={info} />}
+                  {devCode && (
+                    <InfoMessage
+                      message={`Code de développement : ${devCode}`}
+                    />
+                  )}
                   <ResetInput
                     id="email"
                     label="Adresse email"
@@ -357,6 +398,8 @@ export default function ForgotPasswordPage() {
                     type="button"
                     onClick={() => {
                       setError("");
+                      setInfo("");
+                      setDevCode("");
                       setStep(1);
                     }}
                     className="w-full text-center text-sm font-medium text-slate-500 transition hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:text-slate-400 dark:hover:text-white"
@@ -442,6 +485,14 @@ function ErrorMessage({ message }: { message: string }) {
           }
         }
       `}</style>
+    </div>
+  );
+}
+
+function InfoMessage({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-5 text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200">
+      {message}
     </div>
   );
 }

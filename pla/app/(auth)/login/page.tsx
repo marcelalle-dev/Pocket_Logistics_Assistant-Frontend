@@ -14,10 +14,11 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { authApi } from "@/lib/api/auth";
 
 const demoAccount = {
-  email: "demo@pla.app",
-  password: "demo1234",
+  email: "test.local@example.com",
+  password: "password123",
 };
 
 function AuthLogo() {
@@ -125,10 +126,14 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
+      await authApi.login({ email, password });
       router.push("/");
-    } catch {
-      setError("Connexion impossible pour le moment. Réessayez dans un instant.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Connexion impossible pour le moment. Réessayez dans un instant.",
+      );
     } finally {
       setIsLoading(false);
     }

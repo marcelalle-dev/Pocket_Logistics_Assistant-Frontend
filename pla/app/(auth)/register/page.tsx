@@ -17,6 +17,7 @@ import {
   Smartphone,
   User,
 } from "lucide-react";
+import { authApi } from "@/lib/api/auth";
 
 type RegisterField = "name" | "email" | "phone" | "password" | "confirm";
 
@@ -182,10 +183,18 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      router.push("/login?registered=1");
-    } catch {
-      setError("Création impossible pour le moment. Réessayez dans un instant.");
+      await authApi.register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      router.push("/");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Création impossible pour le moment. Réessayez dans un instant.",
+      );
     } finally {
       setIsLoading(false);
     }
